@@ -1,57 +1,124 @@
 plugins {
     id 'java-library'
+    id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.148'
+    id 'idea'
 }
 
-// A linked Gradle project has the consumer's gradle.properties.
-def metadata = new Properties()
-file('gradle.properties').withInputStream { metadata.load(it) }
-
-group = 'com.iafenvoy.assistantcore'
-version = metadata.getProperty('assistant_core_version')
-
-if (project != rootProject) {
-    layout.buildDirectory = rootProject.layout.buildDirectory.dir('assistant-core')
+tasks.named('wrapper', Wrapper).configure {
+    distributionType = Wrapper.DistributionType.BIN
 }
 
-base {
-    archivesName = 'assistant-core'
-}
+version = mod_version
+group = mod_group_id
 
-java {
-    toolchain.languageVersion = JavaLanguageVersion.of(25)
+sourceSets.main.resources {
+    srcDir('src/generated/resources')
+
+    exclude("src/generated/**/.cache")
 }
 
 repositories {
     mavenCentral()
+    maven { url = "https://cursemaven.com" }
+}
+
+base {
+    archivesName = mod_id
 }
 
 neoForge {
-    version = metadata.getProperty('assistant_core_neo_version')
+    version = project.neo_version
+
+    runs {
+        client {
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        server {
+            server()
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        gameTestServer {
+            type = "gameTestServer"
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        data {
+            clientData()
+            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+
+            logLevel = org.slf4j.event.Level.DEBUG
+
+            taskBefore(tasks.named('classes'))
+        }
+    }
 
     mods {
-        assistant_core {
+        "${mod_id}" {
             sourceSet(sourceSets.main)
         }
     }
 }
 
-tasks.named('processResources', ProcessResources).configure {
-    def modMetadata = [
-            mod_version      : project.version,
-            neo_version      : metadata.getProperty('assistant_core_neo_version'),
-            minecraft_version: metadata.getProperty('assistant_core_minecraft_version')
-    ]
-    inputs.properties modMetadata
-    filesMatching('META-INF/neoforge.mods.toml') {
-        expand modMetadata
-    }
+// Keep the development server console usable from Gradle/IDE launches.
+tasks.named('runServer').configure {
+    standardInput = System.in
 }
 
-tasks.named('jar', Jar).configure {
-    from('LICENSE')
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+}
+
+dependencies {
+    compileOnly "curse.maven:simple-voice-chat-416089:${voicechat_file_id}"
+}
+
+var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from "src/main/templates"
+    into "build/generated/sources/modMetadata"
+}
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
+
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            url "file://${project.projectDir}/repo"
+        }
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
 }

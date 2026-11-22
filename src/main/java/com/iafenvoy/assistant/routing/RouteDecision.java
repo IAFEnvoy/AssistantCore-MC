@@ -1,0 +1,20 @@
+package com.iafenvoy.assistant.routing;
+
+import com.iafenvoy.assistant.AgentResult;
+import com.iafenvoy.assistant.action.AgentAction;
+
+import java.util.List;
+
+public record RouteDecision(AgentAction input, RouteSource source, List<AgentResult.Action> choices) {
+    public RouteDecision {
+        choices = List.copyOf(choices);
+    }
+
+    public RouteDecision(AgentAction input, RouteSource source) {
+        this(input, source, List.of());
+    }
+
+    public String moduleId() {
+        return this.input == null ? "clarify" : this.input.id().toString();
+    }
+}
