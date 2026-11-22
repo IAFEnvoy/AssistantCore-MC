@@ -71,7 +71,7 @@ public class DeepSeekTtsProvider implements TtsProvider {
     public void synthesizeStreaming(Request request, AudioSink audio, Consumer<Usage> observer) throws Exception {
         this.validate(request);
         // Callers already supply plain narration; disabling filtering makes the locally counted input explicit.
-        String body = CodecIO.write(DeepSeekTtsMessage.CODEC, new DeepSeekTtsMessage(request.text(), request.voice(), "pcm", false));
+        String body = CodecIO.encode(DeepSeekTtsMessage.CODEC, new DeepSeekTtsMessage(request.text(), request.voice(), "pcm", false));
         if (body.getBytes(StandardCharsets.UTF_8).length > 65536) throw new SpeechException("text");
         HttpRequest http = HttpRequest.newBuilder(ENDPOINT).timeout(Duration.ofSeconds(90))
                 .header("Authorization", "Bearer " + request.apiKey()).header("Content-Type", "application/json")

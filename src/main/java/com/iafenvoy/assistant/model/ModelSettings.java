@@ -12,12 +12,11 @@ public record ModelSettings(String model, URI chatCompletionsEndpoint, boolean d
         Objects.requireNonNull(reasoningEffort);
         if (!Set.of("max_tokens", "max_completion_tokens").contains(outputTokenParameter))
             throw new IllegalArgumentException("Unsupported output token parameter");
-        URI endpoint = chatCompletionsEndpoint;
-        String host = endpoint.getHost();
+        String host = chatCompletionsEndpoint.getHost();
         boolean loopback = "localhost".equalsIgnoreCase(host) || "127.0.0.1".equals(host) || "[::1]".equals(host);
-        if (host == null || endpoint.getUserInfo() != null || endpoint.getQuery() != null || endpoint.getFragment() != null
-                || !("https".equalsIgnoreCase(endpoint.getScheme()) || "http".equalsIgnoreCase(endpoint.getScheme()) && loopback)
-                || endpoint.getPort() < -1 || endpoint.getPort() == 0 || endpoint.getPort() > 65535)
+        if (host == null || chatCompletionsEndpoint.getUserInfo() != null || chatCompletionsEndpoint.getQuery() != null || chatCompletionsEndpoint.getFragment() != null
+                || !("https".equalsIgnoreCase(chatCompletionsEndpoint.getScheme()) || "http".equalsIgnoreCase(chatCompletionsEndpoint.getScheme()) && loopback)
+                || chatCompletionsEndpoint.getPort() < -1 || chatCompletionsEndpoint.getPort() == 0 || chatCompletionsEndpoint.getPort() > 65535)
             throw new IllegalArgumentException("A fixed HTTPS model endpoint or loopback HTTP endpoint is required");
     }
 }

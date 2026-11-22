@@ -26,7 +26,7 @@ public interface AgentAction {
      */
     static <I extends AgentAction> I validate(MapCodec<I> codec, I input) {
         if (input.codec() != codec) throw new IllegalArgumentException("Incorrect Agent action codec");
-        CodecIO.write(CODEC, input);
+        CodecIO.encode(CODEC, input);
         return input;
     }
 }

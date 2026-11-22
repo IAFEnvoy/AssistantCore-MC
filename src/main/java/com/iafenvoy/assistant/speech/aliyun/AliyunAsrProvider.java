@@ -126,7 +126,7 @@ public class AliyunAsrProvider implements AsrProvider {
     }
 
     private static String command(Request request, String task, String name, AliyunAsrMessage.Parameters payload) {
-        return CodecIO.write(AliyunAsrMessage.Command.CODEC, new AliyunAsrMessage.Command(
+        return CodecIO.encode(AliyunAsrMessage.Command.CODEC, new AliyunAsrMessage.Command(
                 new AliyunAsrMessage.Header(request.appKey(), "SpeechRecognizer", name, task, messageId()), Optional.ofNullable(payload)));
     }
 

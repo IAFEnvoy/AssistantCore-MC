@@ -89,7 +89,7 @@ public final class CommandRegistry {
             AgentAction action = source.action();
             if (action == null || !action.id().equals(owner)) throw new AssistantException(Reason.INVALID_INPUT);
             // Native argument parsing still enters the same Codec and workflow checks as network actions.
-            CodecIO.write(AgentAction.CODEC, action);
+            CodecIO.encode(AgentAction.CODEC, action);
             return action;
         } catch (CommandSyntaxException error) {
             if (!command.explicit()) return null;

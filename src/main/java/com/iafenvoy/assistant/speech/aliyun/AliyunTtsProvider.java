@@ -67,7 +67,7 @@ public class AliyunTtsProvider implements TtsProvider {
     public void synthesizeStreaming(Request request, AudioSink audio, Consumer<Usage> observer) throws Exception {
         this.validate(request);
         boolean custom = request.model().startsWith("qwen-audio-");
-        String body = CodecIO.write(AliyunTtsMessage.Request.CODEC, AliyunTtsMessage.Request.of(request, "pcm"));
+        String body = CodecIO.encode(AliyunTtsMessage.Request.CODEC, AliyunTtsMessage.Request.of(request, "pcm"));
         String path = custom ? "/api/v1/services/audio/tts/SpeechSynthesizer" : "/api/v1/services/aigc/multimodal-generation/generation";
         StreamResult result = new StreamResult(request.model(), audio, observer);
         ServerSentEvents events = new ServerSentEvents(2 * 1024 * 1024, result::event);
@@ -144,7 +144,7 @@ public class AliyunTtsProvider implements TtsProvider {
     public byte[] synthesize(Request request, Consumer<Usage> observer) throws Exception {
         this.validate(request);
         boolean custom = request.model().startsWith("qwen-audio-");
-        String body = CodecIO.write(AliyunTtsMessage.Request.CODEC, AliyunTtsMessage.Request.of(request, "wav"));
+        String body = CodecIO.encode(AliyunTtsMessage.Request.CODEC, AliyunTtsMessage.Request.of(request, "wav"));
         String path = custom ? "/api/v1/services/audio/tts/SpeechSynthesizer" : "/api/v1/services/aigc/multimodal-generation/generation";
         HttpResponse<byte[]> response = this.transport.postJson(URI.create(baseUrl(request) + path), body, Map.of("Authorization", "Bearer " + request.apiKey()), Duration.ofSeconds(45), 12 * 1024 * 1024);
         checkStatus(response.statusCode());

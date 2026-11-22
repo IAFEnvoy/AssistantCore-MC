@@ -74,7 +74,7 @@ public final class ModelExecutor {
     public static long inputBytes(String instruction, String content, List<ModelClient.Function> functions) {
         long bytes = (long) instruction.getBytes(StandardCharsets.UTF_8).length + content.getBytes(StandardCharsets.UTF_8).length;
         if (!functions.isEmpty())
-            bytes += CodecIO.write(ModelClient.Function.CODEC.listOf(), functions).getBytes(StandardCharsets.UTF_8).length;
+            bytes += CodecIO.encode(ModelClient.Function.CODEC.listOf(), functions).getBytes(StandardCharsets.UTF_8).length;
         return bytes;
     }
 

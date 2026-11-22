@@ -43,7 +43,7 @@ public final class ToolExecutor<P, C extends ToolExecutor.Context, R> {
         if (context.isEvent() && !tool.allowEvent()) throw new AssistantException(Reason.NOT_AUTHORIZED);
 
         if (tool.write()) {
-            String fingerprint = id + ":" + CodecIO.write(store.codec(type.inputCodec().codec()), input);
+            String fingerprint = id + ":" + CodecIO.encode(store.codec(type.inputCodec().codec()), input);
             Dynamic<?> previous = store.read(player, data -> this.replay(tool, operationKey, fingerprint, data));
             if (previous != null) {
                 context.completedWrite(stepId);

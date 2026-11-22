@@ -56,7 +56,7 @@ public final class InteractiveRequests implements AutoCloseable {
 
     public static String fingerprint(String requestId, AgentAction action, String text) {
         UUID.fromString(requestId);
-        String encoded = action == null ? "{}" : CodecIO.write(AgentAction.CODEC, action);
+        String encoded = action == null ? "{}" : CodecIO.encode(AgentAction.CODEC, action);
         if (text == null || text.codePointCount(0, text.length()) > 2000 || text.getBytes(StandardCharsets.UTF_8).length > 8192
                 || encoded.length() > 4096)
             throw new AssistantException(Reason.INVALID_INPUT);

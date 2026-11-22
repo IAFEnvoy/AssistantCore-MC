@@ -26,7 +26,7 @@ public record ReActTool<I, O>(String id, String description, MapCodec<I> inputCo
     }
 
     public ReActTool(String id, String description, MapCodec<I> inputCodec, JsonObject schema, Handler<I, O> handler) {
-        this(id, description, inputCodec, schema, input -> CodecIO.write(inputCodec.codec(), input), handler);
+        this(id, description, inputCodec, schema, input -> CodecIO.encode(inputCodec.codec(), input), handler);
     }
 
     public ReActTool(String id, String description, MapCodec<I> inputCodec, JsonObject schema, Function<I, String> repetitionKey, Handler<I, O> handler) {

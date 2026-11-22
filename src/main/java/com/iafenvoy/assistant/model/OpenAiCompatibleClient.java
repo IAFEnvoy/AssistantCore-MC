@@ -63,7 +63,7 @@ public class OpenAiCompatibleClient implements ModelClient {
         ChatCompletion.Request request = ChatCompletion.Request.of(this.config, messages, functions, options, maxOutputTokens);
         URI endpoint = this.config.chatCompletionsEndpoint();
         Map<String, String> headers = this.key.isBlank() ? Map.of() : Map.of("Authorization", "Bearer " + this.key);
-        String body = CodecIO.write(ChatCompletion.Request.CODEC, request);
+        String body = CodecIO.encode(ChatCompletion.Request.CODEC, request);
         HttpResponse<byte[]> response;
         try {
             response = this.http.postJson(endpoint, body, headers, timeout, options.webSearch() ? 4194304 : 65536);

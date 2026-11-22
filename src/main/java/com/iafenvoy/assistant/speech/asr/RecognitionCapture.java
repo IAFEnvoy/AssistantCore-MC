@@ -1,7 +1,7 @@
 package com.iafenvoy.assistant.speech.asr;
 
-import com.mojang.logging.LogUtils;
 import com.iafenvoy.assistant.speech.SpeechException;
+import com.mojang.logging.LogUtils;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLEnvironment;
 
