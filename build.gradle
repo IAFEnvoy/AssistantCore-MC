@@ -1,0 +1,57 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.148'
+}
+
+// A linked Gradle project has the consumer's gradle.properties.
+def metadata = new Properties()
+file('gradle.properties').withInputStream { metadata.load(it) }
+
+group = 'com.iafenvoy.assistantcore'
+version = metadata.getProperty('assistant_core_version')
+
+if (project != rootProject) {
+    layout.buildDirectory = rootProject.layout.buildDirectory.dir('assistant-core')
+}
+
+base {
+    archivesName = 'assistant-core'
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(25)
+}
+
+repositories {
+    mavenCentral()
+}
+
+neoForge {
+    version = metadata.getProperty('assistant_core_neo_version')
+
+    mods {
+        assistant_core {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    def modMetadata = [
+            mod_version      : project.version,
+            neo_version      : metadata.getProperty('assistant_core_neo_version'),
+            minecraft_version: metadata.getProperty('assistant_core_minecraft_version')
+    ]
+    inputs.properties modMetadata
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand modMetadata
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    from('LICENSE')
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
