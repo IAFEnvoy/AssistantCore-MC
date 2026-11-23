@@ -26,7 +26,7 @@ public final class WorkflowExecutor<C extends WorkflowExecutor.Context, R> {
     }
 
     public AgentResult<R> execute(C context, AgentAction input, Predicate<Identifier> scopeAvailable,
-                                  ExecutionPolicy policyOverride) throws Exception {
+                                  ExecutionPolicy policyOverride) {
         ModuleRegistry.Call<?, C, R> call = this.modules.call(input, scopeAvailable);
         AgentModule.Descriptor descriptor = call.module().descriptor();
         if (!context.available(descriptor.id()) || !(context.isEvent() ? descriptor.event() : descriptor.interactive()))

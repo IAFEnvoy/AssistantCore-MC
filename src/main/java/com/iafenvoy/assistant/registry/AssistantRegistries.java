@@ -7,6 +7,7 @@ import com.iafenvoy.assistant.credential.SpeechCredentials;
 import com.iafenvoy.assistant.request.*;
 import com.iafenvoy.assistant.response.AgentResponse;
 import com.iafenvoy.assistant.response.CommandSuggestionsResponse;
+import com.iafenvoy.assistant.text.TextAnnotationProcessor;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.Registry;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -22,6 +23,7 @@ import net.neoforged.neoforge.registries.RegistryBuilder;
 public final class AssistantRegistries {
     public static final Registry<MapCodec<? extends AgentAction>> ACTION_TYPE = new RegistryBuilder<>(AssistantResourceKeys.ACTION_TYPE).create();
     public static final Registry<MapCodec<? extends Credential>> CREDENTIAL_TYPE = new RegistryBuilder<>(AssistantResourceKeys.CREDENTIAL_TYPE).create();
+    public static final Registry<TextAnnotationProcessor> ANNOTATION_PROCESSOR = new RegistryBuilder<>(AssistantResourceKeys.ANNOTATION_PROCESSOR).create();
 
     public static final Registry<StreamCodec<? super RegistryFriendlyByteBuf, ? extends AgentRequest>> AGENT_REQUEST_TYPE = new RegistryBuilder<>(AssistantResourceKeys.AGENT_REQUEST_TYPE).sync(true).create();
     public static final Registry<StreamCodec<? super RegistryFriendlyByteBuf, ? extends AgentResponse>> AGENT_RESPONSE_TYPE = new RegistryBuilder<>(AssistantResourceKeys.AGENT_RESPONSE_TYPE).sync(true).create();
@@ -55,6 +57,7 @@ public final class AssistantRegistries {
     public static void register(NewRegistryEvent event) {
         event.register(ACTION_TYPE);
         event.register(CREDENTIAL_TYPE);
+        event.register(ANNOTATION_PROCESSOR);
         event.register(AGENT_REQUEST_TYPE);
         event.register(AGENT_RESPONSE_TYPE);
     }

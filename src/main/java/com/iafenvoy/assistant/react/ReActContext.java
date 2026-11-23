@@ -81,7 +81,7 @@ public final class ReActContext<O> {
         return this.execution.remainingMillis() <= this.execution.modelTimeoutMillis() + this.toolReserveMillis;
     }
 
-    <S> S decide(Codec<S> codec, JsonObject answerSchema, boolean finalOnly) throws Exception {
+    <S> S decide(Codec<S> codec, JsonObject answerSchema, boolean finalOnly) {
         // Native function names cannot contain ':' or '.'. Aliases are unique within this request.
         Map<String, ReActTool<?, O>> aliases = new LinkedHashMap<>();
         List<ModelClient.Function> functions = new ArrayList<>();
@@ -122,7 +122,7 @@ public final class ReActContext<O> {
         }
     }
 
-    <I> boolean perform(ReActTool<I, O> tool, I input) throws Exception {
+    <I> boolean perform(ReActTool<I, O> tool, I input) {
         if (this.tools.get(tool.id()) != tool) throw new AssistantException(Reason.NOT_AUTHORIZED);
         // Failed attempts are remembered too; a loop never silently retries an already paid operation.
         if (!this.attempted.add(tool.id() + ":" + tool.repetitionKey().apply(input))) return false;
@@ -161,7 +161,7 @@ public final class ReActContext<O> {
         <T> Codec<T> codec(Codec<T> codec);
 
         <I, O> O model(String instruction, MapCodec<I> inputCodec, I input, List<ModelClient.Function> functions,
-                       Function<ModelClient.Reply, O> decoder) throws Exception;
+                       Function<ModelClient.Reply, O> decoder);
     }
 
     private record Input<O>(String question, List<O> observations,

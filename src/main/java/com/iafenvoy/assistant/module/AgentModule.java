@@ -27,7 +27,7 @@ public interface AgentModule<I extends AgentAction, C, R> {
         return ModuleRouting.defaults();
     }
 
-    AgentResult<R> execute(C context, I input) throws Exception;
+    AgentResult<R> execute(C context, I input);
 
     // Descriptions guide routing; tools and entry flags constrain execution, and version guards event resume.
     record Descriptor(Identifier id, int version, String description, JsonObject schema,

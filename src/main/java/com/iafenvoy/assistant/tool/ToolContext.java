@@ -26,7 +26,7 @@ public final class ToolContext<C extends ToolContext.Execution<C>> {
         return this.tools.values().stream().<ToolRegistry.Tool<?, ?, C>>map(ToolRegistry.ScopedTool::tool).toList();
     }
 
-    public <I, O> O call(ToolRegistry.Type<I, O> type, I input) throws Exception {
+    public <I, O> O call(ToolRegistry.Type<I, O> type, I input) {
         ToolRegistry.ScopedTool<I, O, C> tool = this.require(type);
         this.used.add(type.id());
         return this.execution.scopedTool(tool, this.prefix + "/" + this.calls++, input);
@@ -46,7 +46,7 @@ public final class ToolContext<C extends ToolContext.Execution<C>> {
     }
 
     public interface Execution<C> {
-        <I, O> O scopedTool(ToolRegistry.ScopedTool<I, O, C> scoped, String stepId, I input) throws Exception;
+        <I, O> O scopedTool(ToolRegistry.ScopedTool<I, O, C> scoped, String stepId, I input);
 
         void checkToolOwner(ToolRegistry.ScopedTool<?, ?, C> scoped);
 

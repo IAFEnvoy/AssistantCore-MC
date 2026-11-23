@@ -59,7 +59,7 @@ public interface TtsProvider extends AutoCloseable {
 
     @FunctionalInterface
     interface AudioSink {
-        void accept(int sampleRate, int channels, byte[] pcm) throws Exception;
+        void accept(int sampleRate, int channels, byte[] pcm);
     }
 
     enum Unit {UNKNOWN, CHARACTERS, TOKENS}

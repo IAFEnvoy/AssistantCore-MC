@@ -44,6 +44,6 @@ public record ReActTool<I, O>(String id, String description, MapCodec<I> inputCo
 
     @FunctionalInterface
     public interface Handler<I, O> {
-        O execute(I input) throws Exception;
+        O execute(I input);
     }
 }

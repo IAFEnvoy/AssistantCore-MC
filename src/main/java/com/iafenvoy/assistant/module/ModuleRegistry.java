@@ -274,7 +274,7 @@ public final class ModuleRegistry<C, R> {
     }
 
     public record Call<I extends AgentAction, C, R>(ModuleScope scope, AgentModule<I, C, R> module, I input) {
-        public AgentResult<R> execute(C context) throws Exception {
+        public AgentResult<R> execute(C context) {
             return this.module.execute(context, this.input);
         }
     }

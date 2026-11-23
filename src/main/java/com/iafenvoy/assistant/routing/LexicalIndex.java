@@ -35,6 +35,7 @@ public final class LexicalIndex<T> {
     private final List<Indexed<T>> examples;
     private final Map<String, Map<String, Double>> idf;
     private final Map<String, Double> unknownIdf;
+    private final Map<String, Map<String, Double>> conceptWeights;
 
     public LexicalIndex(Collection<Example<T>> examples) {
         this(examples, Map.of(), false);
@@ -42,7 +43,15 @@ public final class LexicalIndex<T> {
 
     public LexicalIndex(Collection<Example<T>> examples, Map<String, Map<String, List<String>>> lexicon,
                         boolean normalizeResourceIds) {
+        this(examples, lexicon, normalizeResourceIds, Map.of());
+    }
+
+    public LexicalIndex(Collection<Example<T>> examples, Map<String, Map<String, List<String>>> lexicon,
+                        boolean normalizeResourceIds, Map<String, Map<String, Double>> conceptWeights) {
         this.encoder = new LexicalEncoder(lexicon, normalizeResourceIds);
+        Map<String, Map<String, Double>> modifiers = new HashMap<>();
+        conceptWeights.forEach((language, weights) -> modifiers.put(language, Map.copyOf(weights)));
+        this.conceptWeights = Map.copyOf(modifiers);
         List<Document<T>> documents = examples.stream()
                 .map(example -> new Document<>(example.value(), example.language(), this.encoder.encode(example.text(), example.language()))).toList();
         Map<String, Map<String, Integer>> frequencies = new HashMap<>();
@@ -102,11 +111,14 @@ public final class LexicalIndex<T> {
 
     private Vector vector(LexicalEncoder.Features features, String language) {
         Map<String, Double> values = new HashMap<>();
+        Map<String, Double> conceptWeights = this.conceptWeights.getOrDefault(language, Map.of());
         double squared = 0, mass = 0;
         for (Map.Entry<String, Double> feature : features.terms().entrySet()) {
             double frequency = feature.getValue();
             double weight = (frequency < 1 ? frequency : 1 + Math.log(frequency)) * this.idf.getOrDefault(language, Map.of())
                     .getOrDefault(feature.getKey(), this.unknownIdf.getOrDefault(language, 1.0));
+            if (feature.getKey().startsWith("term:"))
+                weight *= conceptWeights.getOrDefault(feature.getKey().substring("term:".length()), 1.0);
             values.put(feature.getKey(), weight);
             squared += weight * weight;
             mass += weight;

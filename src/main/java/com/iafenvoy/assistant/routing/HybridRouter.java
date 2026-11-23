@@ -75,7 +75,7 @@ public final class HybridRouter<C extends HybridRouter.Context, R> implements Au
         }
 
         @Override
-        public RouteDecision assisted() throws Exception {
+        public RouteDecision assisted() {
             if (!this.context.externalServicesAllowed()) return this.fallback();
             // The decoder accepts exactly the advertised catalogue, including confirmation-only exclusions.
             try {
@@ -123,7 +123,7 @@ public final class HybridRouter<C extends HybridRouter.Context, R> implements Au
     @FunctionalInterface
     public interface AssistedRoute<C> {
         ModelRoute route(C context, String text, List<ModelRoute.Candidate> hints,
-                         Map<String, ModelRoute.Capability> capabilities, Codec<ModelRoute> codec) throws Exception;
+                         Map<String, ModelRoute.Capability> capabilities, Codec<ModelRoute> codec);
     }
 
     public void clear(UUID player) {

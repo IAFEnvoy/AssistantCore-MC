@@ -73,7 +73,7 @@ public final class ReActLoop {
     private sealed interface Step<A, O> permits Final, Call {
         String type();
 
-        default boolean perform(ReActContext<O> context) throws Exception {
+        default boolean perform(ReActContext<O> context) {
             throw new AssistantException(Reason.MODEL_INVALID);
         }
     }
@@ -92,7 +92,7 @@ public final class ReActLoop {
         }
 
         @Override
-        public boolean perform(ReActContext<O> context) throws Exception {
+        public boolean perform(ReActContext<O> context) {
             return context.perform(this.tool, this.input);
         }
     }

@@ -23,14 +23,14 @@ public enum ConversationMode implements StringRepresentable, ConversationStrateg
     },
     STANDARD {
         @Override
-        public RouteDecision route(Routes routes) throws Exception {
+        public RouteDecision route(Routes routes) {
             RouteDecision local = routes.local();
             return local.input() == null ? routes.assisted() : local;
         }
     },
     EXTENDED {
         @Override
-        public RouteDecision route(Routes routes) throws Exception {
+        public RouteDecision route(Routes routes) {
             RouteDecision local = routes.local();
             if (local.input() != null) return local;
             RouteDecision assisted = routes.assisted();

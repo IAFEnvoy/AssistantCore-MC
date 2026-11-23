@@ -5,6 +5,7 @@ import com.iafenvoy.assistant.action.AgentAction;
 import com.iafenvoy.assistant.credential.Credential;
 import com.iafenvoy.assistant.request.AgentRequest;
 import com.iafenvoy.assistant.response.AgentResponse;
+import com.iafenvoy.assistant.text.TextAnnotationProcessor;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.Registry;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -15,6 +16,7 @@ import net.minecraft.resources.ResourceKey;
 public final class AssistantResourceKeys {
     public static final ResourceKey<Registry<MapCodec<? extends AgentAction>>> ACTION_TYPE = registry("action_type");
     public static final ResourceKey<Registry<MapCodec<? extends Credential>>> CREDENTIAL_TYPE = registry("credential_type");
+    public static final ResourceKey<Registry<TextAnnotationProcessor>> ANNOTATION_PROCESSOR = registry("annotation_processor");
 
     public static final ResourceKey<Registry<StreamCodec<? super RegistryFriendlyByteBuf, ? extends AgentRequest>>> AGENT_REQUEST_TYPE = registry("agent_request_type");
     public static final ResourceKey<Registry<StreamCodec<? super RegistryFriendlyByteBuf, ? extends AgentResponse>>> AGENT_RESPONSE_TYPE = registry("agent_response_type");
