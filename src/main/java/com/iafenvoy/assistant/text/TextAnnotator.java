@@ -1,10 +1,10 @@
 package com.iafenvoy.assistant.text;
 
 import com.iafenvoy.assistant.text.TextAnnotations.Candidate;
+import com.iafenvoy.assistant.text.TextAnnotations.CandidateKey;
 import com.iafenvoy.assistant.text.TextAnnotations.Quantity;
 import com.iafenvoy.assistant.text.TextAnnotations.Reference;
 import com.iafenvoy.assistant.text.TextAnnotations.Span;
-import net.minecraft.resources.Identifier;
 
 import java.text.Normalizer;
 import java.util.*;
@@ -25,7 +25,7 @@ public final class TextAnnotator {
             for (int i = 0; i < text.length(); i++)
                 node = node.children.computeIfAbsent(text.charAt(i), ignored -> new Node());
             Candidate candidate = name.candidate();
-            node.candidates.merge(new RegistryEntry(candidate.registry(), candidate.id()), candidate,
+            node.candidates.merge(candidate.key(), candidate,
                     (first, second) -> first.translationKey().isPresent() ? first : second);
         }
     }
@@ -91,12 +91,9 @@ public final class TextAnnotator {
     public record Name(String text, Candidate candidate) {
     }
 
-    private record RegistryEntry(Identifier registry, Identifier id) {
-    }
-
     private static final class Node {
         private final Map<Character, Node> children = new HashMap<>();
-        private final Map<RegistryEntry, Candidate> candidates = new LinkedHashMap<>();
+        private final Map<CandidateKey, Candidate> candidates = new LinkedHashMap<>();
     }
 
     private record MappedText(String text, List<Span> offsets) {

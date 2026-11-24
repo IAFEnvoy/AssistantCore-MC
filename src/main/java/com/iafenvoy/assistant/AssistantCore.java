@@ -9,8 +9,6 @@ public final class AssistantCore {
     public static final String MOD_ID = "assistant_core";
 
     public AssistantCore(IEventBus bus) {
-        AssistantRegistries.CREDENTIALS.register(bus);
-        AssistantRegistries.REQUESTS.register(bus);
-        AssistantRegistries.RESPONSES.register(bus);
+        AssistantRegistries.bind(bus);
     }
 }

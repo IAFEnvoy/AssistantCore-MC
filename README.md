@@ -36,6 +36,17 @@ both capabilities, DashScope for TTS, and Aliyun NLS for ASR. Supply a matching 
 host's credentials, or register another credential class and its factory on the relevant manager. Each call to `create`
 returns a new provider that the caller closes after use.
 
+## Extend text annotations
+
+Register a `TextAnnotationProcessor` in `assistant_core:annotation_processor` to annotate input for your mod's scope.
+For a custom payload, implement `TextAnnotations.Annotation` and register its `StreamCodec` in the synchronized
+`assistant_core:annotation_type` registry on both sides. Return that same codec from `streamCodec()` and use `withSpan()`
+to support slicing. Consumers can retrieve the payload with `TextAnnotations.ofType`. Offsets refer to the original text
+in UTF-16 units. The host validates annotation data against its current game state before using it.
+
+Reference and quantity annotations are built in. A reference candidate can identify a registry entry or a tag.
+`RegistryTextNames.collectTags` indexes localized tag names from the supplied registry.
+
 ## Connect a host mod
 
 Create an `AssistantChannel` with the host namespace and a codec for its optional request attachment. Register the

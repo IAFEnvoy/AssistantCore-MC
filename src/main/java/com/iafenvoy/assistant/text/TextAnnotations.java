@@ -1,48 +1,75 @@
 package com.iafenvoy.assistant.text;
 
+import com.iafenvoy.assistant.registry.AssistantResourceKeys;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
-/** References and quantities use UTF-16 offsets in the accompanying, unmodified text. */
-public record TextAnnotations(List<Reference> references, List<Quantity> quantities) {
+/** Annotations use UTF-16 offsets in the accompanying, unmodified text. */
+public record TextAnnotations(List<Annotation> values) {
     public static final int MAX_TEXT_LENGTH = 256;
     static final int MAX_MATCHES = 64;
     static final int MAX_CANDIDATES = 16;
     static final int MAX_TRANSLATION_KEY_LENGTH = 256;
-    public static final TextAnnotations EMPTY = new TextAnnotations(List.of(), List.of());
-    public static final StreamCodec<ByteBuf, TextAnnotations> STREAM_CODEC = StreamCodec.composite(
-            Reference.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_MATCHES)), TextAnnotations::references,
-            Quantity.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_MATCHES)), TextAnnotations::quantities,
-            TextAnnotations::new);
+    static final int MAX_ANNOTATIONS = MAX_MATCHES * 3;
+    public static final TextAnnotations EMPTY = new TextAnnotations(List.of());
+    public static final StreamCodec<RegistryFriendlyByteBuf, TextAnnotations> STREAM_CODEC =
+            ByteBufCodecs.registry(AssistantResourceKeys.ANNOTATION_TYPE)
+                    .<Annotation>dispatch(Annotation::streamCodec, Function.identity())
+                    .apply(ByteBufCodecs.list(MAX_ANNOTATIONS)).map(TextAnnotations::new, TextAnnotations::values);
 
     public TextAnnotations {
-        references = List.copyOf(references);
-        quantities = List.copyOf(quantities);
+        values = List.copyOf(values);
+    }
+
+    public TextAnnotations(List<Reference> references, List<Quantity> quantities) {
+        this(Stream.<Annotation>concat(references.stream(), quantities.stream()).toList());
+    }
+
+    public <T extends Annotation> List<T> ofType(Class<T> type) {
+        return this.values.stream().filter(type::isInstance).map(type::cast).toList();
+    }
+
+    public List<Reference> references() {
+        return this.ofType(Reference.class);
+    }
+
+    public List<Quantity> quantities() {
+        return this.ofType(Quantity.class);
     }
 
     public boolean validFor(String text) {
         return text.length() <= MAX_TEXT_LENGTH
-                && this.references.stream().allMatch(ref -> ref.span().validFor(text) && !ref.candidates().isEmpty()
-                        && ref.candidates().stream().allMatch(candidate ->
-                                candidate.translationKey().map(key -> key.length() <= MAX_TRANSLATION_KEY_LENGTH).orElse(true)))
-                && this.quantities.stream().allMatch(quantity -> quantity.span().validFor(text) && quantity.value() > 0);
+                && this.values.size() <= MAX_ANNOTATIONS
+                && this.values.stream().allMatch(value -> value.span().validFor(text) && value.validPayload());
     }
 
     public TextAnnotations slice(int start, int end) {
-        return new TextAnnotations(
-                this.references.stream().filter(ref -> ref.span().within(start, end))
-                        .map(ref -> new Reference(ref.span().offset(-start), ref.candidates())).toList(),
-                this.quantities.stream().filter(quantity -> quantity.span().within(start, end))
-                        .map(quantity -> new Quantity(quantity.span().offset(-start), quantity.value())).toList());
+        return new TextAnnotations(this.values.stream().filter(value -> value.span().within(start, end))
+                .map(value -> value.withSpan(value.span().offset(-start))).toList());
+    }
+
+    public interface Annotation {
+        Span span();
+
+        Annotation withSpan(Span span);
+
+        StreamCodec<? super RegistryFriendlyByteBuf, ? extends Annotation> streamCodec();
+
+        default boolean validPayload() {
+            return true;
+        }
     }
 
     public record Span(int start, int end) {
-        private static final StreamCodec<ByteBuf, Span> STREAM_CODEC = StreamCodec.composite(
+        public static final StreamCodec<ByteBuf, Span> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_INT, Span::start, ByteBufCodecs.VAR_INT, Span::end, Span::new);
 
         public String text(String text) {
@@ -63,16 +90,28 @@ public record TextAnnotations(List<Reference> references, List<Quantity> quantit
         }
     }
 
-    public record Candidate(Identifier registry, Identifier id, Optional<String> translationKey) {
+    public record Candidate(Identifier registry, Identifier id, boolean tag, Optional<String> translationKey) {
         private static final StreamCodec<ByteBuf, Candidate> STREAM_CODEC = StreamCodec.composite(
                 Identifier.STREAM_CODEC, Candidate::registry,
                 Identifier.STREAM_CODEC, Candidate::id,
+                ByteBufCodecs.BOOL, Candidate::tag,
                 ByteBufCodecs.optional(ByteBufCodecs.stringUtf8(MAX_TRANSLATION_KEY_LENGTH)), Candidate::translationKey,
                 Candidate::new);
+
+        public Candidate(Identifier registry, Identifier id, Optional<String> translationKey) {
+            this(registry, id, false, translationKey);
+        }
+
+        CandidateKey key() {
+            return new CandidateKey(this.registry, this.id, this.tag);
+        }
     }
 
-    public record Reference(Span span, List<Candidate> candidates) {
-        private static final StreamCodec<ByteBuf, Reference> STREAM_CODEC = StreamCodec.composite(
+    record CandidateKey(Identifier registry, Identifier id, boolean tag) {
+    }
+
+    public record Reference(Span span, List<Candidate> candidates) implements Annotation {
+        public static final StreamCodec<ByteBuf, Reference> STREAM_CODEC = StreamCodec.composite(
                 Span.STREAM_CODEC, Reference::span,
                 Candidate.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_CANDIDATES)), Reference::candidates,
                 Reference::new);
@@ -80,10 +119,42 @@ public record TextAnnotations(List<Reference> references, List<Quantity> quantit
         public Reference {
             candidates = List.copyOf(candidates);
         }
+
+        @Override
+        public Reference withSpan(Span span) {
+            return new Reference(span, this.candidates);
+        }
+
+        @Override
+        public StreamCodec<ByteBuf, Reference> streamCodec() {
+            return STREAM_CODEC;
+        }
+
+        @Override
+        public boolean validPayload() {
+            return !this.candidates.isEmpty() && this.candidates.size() <= MAX_CANDIDATES
+                    && this.candidates.stream().allMatch(candidate ->
+                    candidate.translationKey().map(key -> key.length() <= MAX_TRANSLATION_KEY_LENGTH).orElse(true));
+        }
     }
 
-    public record Quantity(Span span, int value) {
-        private static final StreamCodec<ByteBuf, Quantity> STREAM_CODEC = StreamCodec.composite(
+    public record Quantity(Span span, int value) implements Annotation {
+        public static final StreamCodec<ByteBuf, Quantity> STREAM_CODEC = StreamCodec.composite(
                 Span.STREAM_CODEC, Quantity::span, ByteBufCodecs.VAR_INT, Quantity::value, Quantity::new);
+
+        @Override
+        public Quantity withSpan(Span span) {
+            return new Quantity(span, this.value);
+        }
+
+        @Override
+        public StreamCodec<ByteBuf, Quantity> streamCodec() {
+            return STREAM_CODEC;
+        }
+
+        @Override
+        public boolean validPayload() {
+            return this.value > 0;
+        }
     }
 }
